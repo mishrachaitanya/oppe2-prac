@@ -35,7 +35,7 @@ jobs:
       - name: Push Docker image
         run: docker push $IMAGE
 
-      # 6️⃣ Get GKE credentials (handles auth plugin automatically)
+      # 6️⃣ Get GKE credentials
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v1
         with:
@@ -46,11 +46,24 @@ jobs:
       # 7️⃣ Deploy to GKE
       - name: Deploy to GKE
         run: |
-          # Update deployment.yaml with new image tag
           sed -i "s|image: .*|image: $IMAGE|" deployment.yaml
-
-          # Apply manifests
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
           kubectl apply -f hpa.yaml
+
+      # 8️⃣ Run Monitoring & Fairlearn Metrics
+      - name: Run monitoring and metrics
+        run: |
+          python monitoring.py
+          python fairlearn_metrics.py
+
+      # 9️⃣ Upload metrics & SHAP images as artifacts
+      - name: Upload metrics & SHAP images
+        uses: actions/upload-artifact@v3
+        with:
+          name: monitoring-artifacts
+          path: |
+            shap_summary.png
+            shap_force_plot.png
+            metrics_output.txt
 
