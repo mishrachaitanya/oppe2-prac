@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -37,10 +37,11 @@ jobs:
         run: |
           docker push $IMAGE
 
-      # 6️⃣ Install GKE Auth Plugin
+      # 6️⃣ Install GKE Auth Plugin (fix for GitHub Actions)
       - name: Install GKE Auth Plugin
         run: |
-          gcloud components install gke-gcloud-auth-plugin -q
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
           export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
       # 7️⃣ Deploy to GKE
