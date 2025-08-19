@@ -10,17 +10,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo
-      - name: Checkout code
+      # 1️⃣ Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up GCP authentication
+      # 2️⃣ Authenticate to GCP
       - name: Set up GCP credentials
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 3️⃣ Configure Docker to use Artifact Registry
+      # 3️⃣ Configure Docker for Artifact Registry
       - name: Configure Docker
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev
@@ -37,14 +37,24 @@ jobs:
         run: |
           docker push $IMAGE
 
-      # 6️⃣ Deploy to GKE
+      # 6️⃣ Install GKE Auth Plugin
+      - name: Install GKE Auth Plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin -q
+          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+
+      # 7️⃣ Deploy to GKE
       - name: Deploy to GKE
         run: |
+          # Get credentials for the cluster
           gcloud container clusters get-credentials demo-log-ml-cluster-1 \
             --zone us-central1-a \
             --project durable-unity-468703-a2
-          # Update deployment.yaml with new image
+
+          # Update deployment.yaml with new image tag
           sed -i "s|image: .*|image: $IMAGE|" deployment.yaml
+
+          # Apply manifests
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
           kubectl apply -f hpa.yaml
