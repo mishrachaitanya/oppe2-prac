@@ -5,6 +5,7 @@ uvicorn[standard]
 joblib
 scikit-learn
 pandas
+fairlearn
 
 # Exporter for Google Cloud Trace
 opentelemetry-exporter-gcp-trace
