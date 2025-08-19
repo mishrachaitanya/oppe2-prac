@@ -4,7 +4,7 @@ fastapi
 uvicorn[standard]
 joblib
 scikit-learn
-
+pandas
 
 # Exporter for Google Cloud Trace
 opentelemetry-exporter-gcp-trace
