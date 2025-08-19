@@ -32,8 +32,18 @@ metric_frame = MetricFrame(
     sensitive_features=df['customer_region']
 )
 
+# Print to console
 print("=== Fairlearn Metrics by Region ===")
 print(metric_frame.by_group)
 print("\n=== Overall Metrics ===")
 print(metric_frame.overall)
+
+# Save metrics to file for GitHub Actions artifact
+with open("fairlearn_metrics.txt", "w") as f:
+    f.write("=== Fairlearn Metrics by Region ===\n")
+    f.write(str(metric_frame.by_group))
+    f.write("\n\n=== Overall Metrics ===\n")
+    f.write(str(metric_frame.overall))
+
+print("\n✅ Fairlearn metrics saved as fairlearn_metrics.txt")
 
