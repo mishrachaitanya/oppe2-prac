@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1️⃣ Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -22,8 +22,7 @@ jobs:
 
       # 3️⃣ Configure Docker for Artifact Registry
       - name: Configure Docker
-        run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
       # 4️⃣ Build Docker image
       - name: Build Docker image
@@ -34,24 +33,19 @@ jobs:
 
       # 5️⃣ Push Docker image to Artifact Registry
       - name: Push Docker image
-        run: |
-          docker push $IMAGE
+        run: docker push $IMAGE
 
-      # 6️⃣ Install GKE Auth Plugin (fix for GitHub Actions)
-      - name: Install GKE Auth Plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-cloud-cli-gke-gcloud-auth-plugin
-          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+      # 6️⃣ Get GKE credentials (handles auth plugin automatically)
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: demo-log-ml-cluster-1
+          location: us-central1-a
+          project_id: durable-unity-468703-a2
 
       # 7️⃣ Deploy to GKE
       - name: Deploy to GKE
         run: |
-          # Get credentials for the cluster
-          gcloud container clusters get-credentials demo-log-ml-cluster-1 \
-            --zone us-central1-a \
-            --project durable-unity-468703-a2
-
           # Update deployment.yaml with new image tag
           sed -i "s|image: .*|image: $IMAGE|" deployment.yaml
 
