@@ -1,0 +1,51 @@
+name: CI/CD - Credit Card Fraud ML
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Set up GCP authentication
+      - name: Set up GCP credentials
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 3️⃣ Configure Docker to use Artifact Registry
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      # 4️⃣ Build Docker image
+      - name: Build Docker image
+        run: |
+          IMAGE="us-central1-docker.pkg.dev/durable-unity-468703-a2/my-repo/demo_log:${GITHUB_SHA}"
+          docker build -t $IMAGE .
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      # 5️⃣ Push Docker image to Artifact Registry
+      - name: Push Docker image
+        run: |
+          docker push $IMAGE
+
+      # 6️⃣ Deploy to GKE
+      - name: Deploy to GKE
+        run: |
+          gcloud container clusters get-credentials demo-log-ml-cluster-1 \
+            --zone us-central1-a \
+            --project durable-unity-468703-a2
+          # Update deployment.yaml with new image
+          sed -i "s|image: .*|image: $IMAGE|" deployment.yaml
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
+          kubectl apply -f hpa.yaml
+
