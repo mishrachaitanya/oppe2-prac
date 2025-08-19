@@ -1,0 +1,11 @@
+# requirements.txt
+
+fastapi
+uvicorn[standard]
+joblib
+scikit-learn
+
+
+# Exporter for Google Cloud Trace
+opentelemetry-exporter-gcp-trace
+
