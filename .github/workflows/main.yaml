@@ -14,6 +14,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 1.5️⃣ Install Python dependencies
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       # 2️⃣ Authenticate to GCP
       - name: Set up GCP credentials
         uses: google-github-actions/auth@v1
@@ -35,7 +41,24 @@ jobs:
       - name: Push Docker image
         run: docker push $IMAGE
 
-      # 6️⃣ Get GKE credentials (handles auth plugin automatically)
+      # 6️⃣ Run Fairlearn metrics
+      - name: Run Fairlearn Metrics
+        run: python fairlearn_metrics.py
+
+      # 7️⃣ Run monitoring (SHAP plots)
+      - name: Run Monitoring & SHAP
+        run: python monitoring.py
+
+      # 8️⃣ Upload SHAP plots as artifacts
+      - name: Upload SHAP plots
+        uses: actions/upload-artifact@v4
+        with:
+          name: shap-plots
+          path: |
+            shap_summary.png
+            shap_force_plot.png
+
+      # 9️⃣ Get GKE credentials
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v1
         with:
@@ -43,7 +66,7 @@ jobs:
           location: us-central1-a
           project_id: durable-unity-468703-a2
 
-      # 7️⃣ Deploy to GKE
+      # 🔟 Deploy to GKE
       - name: Deploy to GKE
         run: |
           # Update deployment.yaml with new image tag
@@ -53,20 +76,4 @@ jobs:
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
           kubectl apply -f hpa.yaml
-
-      # 8️⃣ Run Fairlearn metrics and monitoring
-      - name: Run Fairlearn & SHAP monitoring
-        run: |
-          python fairlearn_metrics.py
-          python monitoring.py
-
-      # 9️⃣ Upload SHAP & Fairlearn artifacts
-      - name: Upload monitoring results
-        uses: actions/upload-artifact@v4
-        with:
-          name: monitoring-results
-          path: |
-            shap_summary.png
-            shap_force_plot.png
-            fairlearn_metrics.txt
 
